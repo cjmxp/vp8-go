@@ -7,7 +7,13 @@ include $(GOROOT)/src/Make.inc
 TARG=vp8-go.googlecode.com/hg/vp8
 GOFILES=\
 	decode.go\
+	idct.go\
 	partition.go\
+	pred.go\
+	predfunc.go\
+	quant.go\
+	reconstruct.go\
+	token.go\
 
 include $(GOROOT)/src/Make.pkg
 

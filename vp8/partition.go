@@ -68,7 +68,7 @@ func (p *partition) init(buf []byte) {
 }
 
 // readBit returns the next bit.
-func (p *partition) readBit(prob uint32) bool {
+func (p *partition) readBit(prob uint8) bool {
 	if p.nBits < 8 {
 		if p.r >= len(p.buf) {
 			p.unexpectedEOF = true
@@ -78,7 +78,7 @@ func (p *partition) readBit(prob uint32) bool {
 		p.r++
 		p.nBits += 8
 	}
-	split := (p.rangeM1*prob)>>8 + 1
+	split := (p.rangeM1*uint32(prob))>>8 + 1
 	bit := p.bits >= split<<8
 	if bit {
 		p.rangeM1 -= split
@@ -96,7 +96,7 @@ func (p *partition) readBit(prob uint32) bool {
 }
 
 // readUint returns the next n-bit unsigned integer.
-func (p *partition) readUint(prob, n uint32) uint32 {
+func (p *partition) readUint(prob, n uint8) uint32 {
 	var u uint32
 	for n > 0 {
 		n--
@@ -108,7 +108,7 @@ func (p *partition) readUint(prob, n uint32) uint32 {
 }
 
 // readInt returns the next n-bit signed integer.
-func (p *partition) readInt(prob, n uint32) int32 {
+func (p *partition) readInt(prob, n uint8) int32 {
 	u := p.readUint(prob, n)
 	b := p.readBit(prob)
 	if b {
@@ -119,7 +119,7 @@ func (p *partition) readInt(prob, n uint32) int32 {
 
 // readOptionalInt returns the next n-bit signed integer in an encoding
 // where the likely result is zero.
-func (p *partition) readOptionalInt(prob, n uint32) int32 {
+func (p *partition) readOptionalInt(prob, n uint8) int32 {
 	if !p.readBit(prob) {
 		return 0
 	}

@@ -28,7 +28,7 @@ func decode(r io.Reader) (d *vp8.Decoder, fh vp8.FrameHeader, err os.Error) {
 	}
 	riffLen := uint32(b[4]) | uint32(b[5])<<8 | uint32(b[6])<<16 | uint32(b[7])<<24
 	dataLen := uint32(b[16]) | uint32(b[17])<<8 | uint32(b[18])<<16 | uint32(b[19])<<24
-	if riffLen != dataLen+12 {
+	if riffLen < dataLen+12 {
 		err = os.NewError("webp: invalid format")
 		return
 	}
