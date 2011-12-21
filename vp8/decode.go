@@ -11,10 +11,9 @@ package vp8
 // This file implements the top-level decoding algorithm.
 
 import (
+	"errors"
 	"image"
-	"image/ycbcr"
 	"io"
-	"os"
 )
 
 // limitReader wraps an io.Reader to read at most n bytes from it.
@@ -24,7 +23,7 @@ type limitReader struct {
 }
 
 // ReadFull reads exactly len(p) bytes into p.
-func (r *limitReader) ReadFull(p []byte) os.Error {
+func (r *limitReader) ReadFull(p []byte) error {
 	if len(p) > r.n {
 		return io.ErrUnexpectedEOF
 	}
@@ -100,7 +99,7 @@ type Decoder struct {
 	// scratch is a scratch buffer.
 	scratch [8]byte
 	// img is the YCbCr image to decode into.
-	img *ycbcr.YCbCr
+	img *image.YCbCr
 	// mbw and mbh are the number of 16x16 macroblocks wide and high the image is.
 	mbw, mbh int
 	// frameHeader is the frame header. When decoding multiple frames,
@@ -156,7 +155,7 @@ func (d *Decoder) Init(r io.Reader, n int) {
 }
 
 // DecodeFrameHeader decodes the frame header.
-func (d *Decoder) DecodeFrameHeader() (fh FrameHeader, err os.Error) {
+func (d *Decoder) DecodeFrameHeader() (fh FrameHeader, err error) {
 	// All frame headers are at least 3 bytes long.
 	b := d.scratch[:3]
 	if err = d.r.ReadFull(b); err != nil {
@@ -176,7 +175,7 @@ func (d *Decoder) DecodeFrameHeader() (fh FrameHeader, err os.Error) {
 	}
 	// Check the magic sync code.
 	if b[0] != 0x9d || b[1] != 0x01 || b[2] != 0x2a {
-		err = os.NewError("vp8: invalid format")
+		err = errors.New("vp8: invalid format")
 		return
 	}
 	d.frameHeader.Width = int(b[4]&0x3f)<<8 | int(b[3])
@@ -205,11 +204,11 @@ func (d *Decoder) ensureImg() {
 	// VP8 always uses 4:2:0 chroma subsampling, so each macroblock consists of
 	// 1x16x16 luma samples and 2x8x8 chroma samples.
 	buf := make([]uint8, n*(1*16*16+2*8*8))
-	d.img = &ycbcr.YCbCr{
+	d.img = &image.YCbCr{
 		Y:              buf[n*(0*16*16+0*8*8) : n*(1*16*16+0*8*8)],
 		Cb:             buf[n*(1*16*16+0*8*8) : n*(1*16*16+1*8*8)],
 		Cr:             buf[n*(1*16*16+1*8*8) : n*(1*16*16+2*8*8)],
-		SubsampleRatio: ycbcr.SubsampleRatio420,
+		SubsampleRatio: image.YCbCrSubsampleRatio420,
 		YStride:        d.mbw * 16,
 		CStride:        d.mbw * 8,
 		Rect:           image.Rect(0, 0, d.frameHeader.Width, d.frameHeader.Height),
@@ -277,7 +276,7 @@ func (d *Decoder) parseFilterHeader() {
 }
 
 // parseOtherPartitions parses the other partitions, as specified in section 9.5.
-func (d *Decoder) parseOtherPartitions() os.Error {
+func (d *Decoder) parseOtherPartitions() error {
 	buf := make([]byte, d.r.n)
 	if err := d.r.ReadFull(buf); err != nil {
 		return err
@@ -301,7 +300,7 @@ func (d *Decoder) parseOtherPartitions() os.Error {
 }
 
 // parseOtherHeaders parses header information other than the frame header.
-func (d *Decoder) parseOtherHeaders() os.Error {
+func (d *Decoder) parseOtherHeaders() error {
 	// Initialize and parse the first partition.
 	firstPartition := make([]byte, d.frameHeader.FirstPartitionLen)
 	if err := d.r.ReadFull(firstPartition); err != nil {
@@ -323,7 +322,7 @@ func (d *Decoder) parseOtherHeaders() os.Error {
 	if !d.frameHeader.KeyFrame {
 		// Golden and AltRef frames are specified in section 9.7.
 		// TODO(nigeltao): implement. Note that they are only used for video, not still images.
-		return os.NewError("vp8: Golden / AltRef frames are not implemented")
+		return errors.New("vp8: Golden / AltRef frames are not implemented")
 	}
 	// Read and ignore the refreshLastFrameBuffer bit, specified in section 9.8.
 	// It applies only to video, and not still images.
@@ -341,7 +340,7 @@ func (d *Decoder) parseOtherHeaders() os.Error {
 
 // DecodeFrame decodes the frame and returns it as an YCbCr image.
 // The image's contents are valid up until the next call to Decoder.Init.
-func (d *Decoder) DecodeFrame() (*ycbcr.YCbCr, os.Error) {
+func (d *Decoder) DecodeFrame() (*image.YCbCr, error) {
 	d.ensureImg()
 	if err := d.parseOtherHeaders(); err != nil {
 		return nil, err

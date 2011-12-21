@@ -9,31 +9,31 @@
 package webp
 
 import (
+	"errors"
 	"image"
-	"image/ycbcr"
+	"image/color"
 	"io"
-	"os"
 
-	"vp8-go.googlecode.com/hg/vp8"
+	"code.google.com/p/vp8-go/vp8"
 )
 
-func decode(r io.Reader) (d *vp8.Decoder, fh vp8.FrameHeader, err os.Error) {
+func decode(r io.Reader) (d *vp8.Decoder, fh vp8.FrameHeader, err error) {
 	var b [20]byte
 	if _, err = io.ReadFull(r, b[:]); err != nil {
 		return
 	}
 	if string(b[0:4]) != "RIFF" || string(b[8:16]) != "WEBPVP8 " {
-		err = os.NewError("webp: invalid format")
+		err = errors.New("webp: invalid format")
 		return
 	}
 	riffLen := uint32(b[4]) | uint32(b[5])<<8 | uint32(b[6])<<16 | uint32(b[7])<<24
 	dataLen := uint32(b[16]) | uint32(b[17])<<8 | uint32(b[18])<<16 | uint32(b[19])<<24
 	if riffLen < dataLen+12 {
-		err = os.NewError("webp: invalid format")
+		err = errors.New("webp: invalid format")
 		return
 	}
 	if dataLen >= 1<<31 {
-		err = os.NewError("webp: invalid format")
+		err = errors.New("webp: invalid format")
 		return
 	}
 	d = vp8.NewDecoder()
@@ -47,7 +47,7 @@ func decode(r io.Reader) (d *vp8.Decoder, fh vp8.FrameHeader, err os.Error) {
 }
 
 // Decode reads a WEBP image from r and returns it as an image.Image.
-func Decode(r io.Reader) (image.Image, os.Error) {
+func Decode(r io.Reader) (image.Image, error) {
 	d, _, err := decode(r)
 	if err != nil {
 		return nil, err
@@ -57,13 +57,13 @@ func Decode(r io.Reader) (image.Image, os.Error) {
 
 // DecodeConfig returns the color model and dimensions of a WEBP image without
 // decoding the entire image.
-func DecodeConfig(r io.Reader) (image.Config, os.Error) {
+func DecodeConfig(r io.Reader) (image.Config, error) {
 	_, fh, err := decode(r)
 	if err != nil {
 		return image.Config{}, err
 	}
 	c := image.Config{
-		ColorModel: ycbcr.YCbCrColorModel,
+		ColorModel: color.YCbCrModel,
 		Width:      fh.Width,
 		Height:     fh.Height,
 	}

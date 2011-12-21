@@ -4,7 +4,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=vp8-go.googlecode.com/hg/webp
+TARG=code.google.com/p/vp8-go/webp
 GOFILES=\
 	decode.go\
 

@@ -4,7 +4,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=vp8-go.googlecode.com/hg/vp8
+TARG=code.google.com/p/vp8-go/vp8
 GOFILES=\
 	decode.go\
 	idct.go\
