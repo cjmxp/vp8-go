@@ -200,19 +200,8 @@ func (d *Decoder) ensureImg() {
 			return
 		}
 	}
-	n := d.mbw * d.mbh
-	// VP8 always uses 4:2:0 chroma subsampling, so each macroblock consists of
-	// 1x16x16 luma samples and 2x8x8 chroma samples.
-	buf := make([]uint8, n*(1*16*16+2*8*8))
-	d.img = &image.YCbCr{
-		Y:              buf[n*(0*16*16+0*8*8) : n*(1*16*16+0*8*8)],
-		Cb:             buf[n*(1*16*16+0*8*8) : n*(1*16*16+1*8*8)],
-		Cr:             buf[n*(1*16*16+1*8*8) : n*(1*16*16+2*8*8)],
-		SubsampleRatio: image.YCbCrSubsampleRatio420,
-		YStride:        d.mbw * 16,
-		CStride:        d.mbw * 8,
-		Rect:           image.Rect(0, 0, d.frameHeader.Width, d.frameHeader.Height),
-	}
+	m := image.NewYCbCr(image.Rect(0, 0, 16*d.mbw, 16*d.mbh), image.YCbCrSubsampleRatio420)
+	d.img = m.SubImage(image.Rect(0, 0, d.frameHeader.Width, d.frameHeader.Height)).(*image.YCbCr)
 	d.upMB = make([]mb, d.mbw)
 }
 
