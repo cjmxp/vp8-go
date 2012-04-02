@@ -4,8 +4,8 @@
 
 // Package webp implements a decoder for WEBP images.
 //
-// WEBP is defined in the VP8 specification at
-// http://webmproject.org/media/pdf/vp8-bitstream.pdf.
+// WEBP is defined in the VP8 specification at:
+// http://datatracker.ietf.org/doc/rfc6386/
 package webp
 
 import (

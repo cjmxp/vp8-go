@@ -4,8 +4,8 @@
 
 // Package vp8 implements a vp8 image and video decoder.
 //
-// The VP8 specification is at
-// http://webmproject.org/media/pdf/vp8-bitstream.pdf.
+// The VP8 specification is at:
+// http://datatracker.ietf.org/doc/rfc6386/
 package vp8
 
 // This file implements the top-level decoding algorithm.
